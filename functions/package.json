@@ -25,6 +25,6 @@
   },
   "private": true,
   "eslintConfig": {
-    "extends": "expo"
+    "extends": "expo/node"
   }
 }
