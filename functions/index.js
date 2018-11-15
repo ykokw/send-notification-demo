@@ -6,17 +6,10 @@ admin.initializeApp();
 
 const expo = new Expo();
 
-// // Create and Deploy Your First Cloud Functions
-// // https://firebase.google.com/docs/functions/write-firebase-functions
-//
-// exports.helloWorld = functions.https.onRequest((request, response) => {
-//  response.send("Hello from Firebase!");
-// });
-
 exports.sendNotification = functions.firestore
   .document("messages/{messageId}")
-  .onCreate(async() => {
-    console.log('onCreate');
+  .onCreate(async () => {
+    console.log("onCreate");
     const settings = { timestampsInSnapshots: true };
     const db = admin.firestore();
     db.settings(settings);
@@ -28,9 +21,7 @@ exports.sendNotification = functions.firestore
     const messages = [];
     tokens.forEach(pushToken => {
       if (!Expo.isExpoPushToken(pushToken)) {
-        console.error(
-          `Push token ${pushToken} is not a valid Expo push token`
-        );
+        console.error(`Push token ${pushToken} is not a valid Expo push token`);
       }
 
       // Construct a message (see https://docs.expo.io/versions/latest/guides/push-notifications.html)
@@ -44,21 +35,21 @@ exports.sendNotification = functions.firestore
     let chunks = expo.chunkPushNotifications(messages);
     let tickets = [];
     (async () => {
-        // Send the chunks to the Expo push notification service. There are
-        // different strategies you could use. A simple one is to send one chunk at a
-        // time, which nicely spreads the load out over time:
-        for (let chunk of chunks) {
+      // Send the chunks to the Expo push notification service. There are
+      // different strategies you could use. A simple one is to send one chunk at a
+      // time, which nicely spreads the load out over time:
+      for (let chunk of chunks) {
         try {
-            let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-            console.log(ticketChunk);
-            tickets.push(...ticketChunk);
-            // NOTE: If a ticket contains an error code in ticket.details.error, you
-            // must handle it appropriately. The error codes are listed in the Expo
-            // documentation:
-            // https://docs.expo.io/versions/latest/guides/push-notifications#response-format 
+          let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+          console.log(ticketChunk);
+          tickets.push(...ticketChunk);
+          // NOTE: If a ticket contains an error code in ticket.details.error, you
+          // must handle it appropriately. The error codes are listed in the Expo
+          // documentation:
+          // https://docs.expo.io/versions/latest/guides/push-notifications#response-format
         } catch (error) {
-            console.error(error);
+          console.error(error);
         }
-        }
+      }
     })();
   });

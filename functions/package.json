@@ -16,10 +16,15 @@
   },
   "devDependencies": {
     "eslint": "^4.12.0",
-    "eslint-plugin-promise": "^3.6.0"
+    "eslint-config-expo": "^6.0.0",
+    "eslint-plugin-promise": "^3.6.0",
+    "prettier": "^1.15.2"
   },
   "engines": {
     "node": "8"
- },
-  "private": true
+  },
+  "private": true,
+  "eslintConfig": {
+    "extends": "expo"
+  }
 }
