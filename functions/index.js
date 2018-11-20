@@ -5,15 +5,14 @@ const admin = require('firebase-admin');
 admin.initializeApp();
 
 const expo = new Expo();
+// Firestoreのインスタンスを用意
+const settings = { timestampsInSnapshots: true };
+const db = admin.firestore();
+db.settings(settings);
 
 exports.sendNotification = functions.firestore
   .document('messages/{messageId}')
   .onCreate(async () => {
-    // Firestoreのインスタンスを用意
-    const settings = { timestampsInSnapshots: true };
-    const db = admin.firestore();
-    db.settings(settings);
-
     // デバイストークンをFirestoreから全検索
     const query = db.collection('tokens').where('token', '>', '');
     const snapshot = await query.get();
