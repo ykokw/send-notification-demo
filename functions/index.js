@@ -2,10 +2,11 @@ const { Expo } = require('expo-server-sdk');
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 
-admin.initializeApp();
-
+// Expo のインスタンスを用意
 const expo = new Expo();
-// Firestoreのインスタンスを用意
+
+// Firestore のインスタンスを用意
+admin.initializeApp();
 const settings = { timestampsInSnapshots: true };
 const db = admin.firestore();
 db.settings(settings);
@@ -13,7 +14,7 @@ db.settings(settings);
 exports.sendNotification = functions.firestore
   .document('messages/{messageId}')
   .onCreate(async () => {
-    // デバイストークンをFirestoreから全検索
+    // デバイストークンを Firestore から全検索
     const query = db.collection('tokens').where('token', '>', '');
     const snapshot = await query.get();
     const tokens = snapshot.docs.map(doc => doc.get('token'));
@@ -25,7 +26,6 @@ exports.sendNotification = functions.firestore
         console.error(`Push token ${pushToken} is not a valid Expo push token`);
       }
 
-      // Construct a message (see https://docs.expo.io/versions/latest/guides/push-notifications.html)
       messages.push({
         to: pushToken,
         sound: 'default',
@@ -36,7 +36,7 @@ exports.sendNotification = functions.firestore
     const chunks = expo.chunkPushNotifications(messages);
     const tickets = [];
     (async () => {
-      // Expo Push APIをリクエスト
+      // Expo Push API をリクエスト
       for (let chunk of chunks) {
         try {
           const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
