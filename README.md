@@ -1,8 +1,6 @@
 # send-notification-demo
 
-Experimental Cloud Functions for Firebase project.
-
-This project uses [Expo](https://expo.io/) and [Firebase](https://firebase.google.com/?hl=ja) to save Messages data and send Push Notification.
+Experimental Cloud Functions for Firebase project　for [chat-demo](https://github.com/ykokw/chat-demo) repository.
 
 ## pre requirements
 
