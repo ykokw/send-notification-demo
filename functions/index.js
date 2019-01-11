@@ -16,8 +16,6 @@ exports.sendNotification = functions.firestore
   .document('/rooms/{roomId}/messages/{messageId}')
   .onCreate(async (_, context) => {
     const { roomId } = context.params;
-    // roomを購読しているuserを検索
-    console.log(JSON.stringify(context));
     try {
       const usersSnapshot = await db
         .collection('users')
@@ -31,13 +29,17 @@ exports.sendNotification = functions.firestore
       // usersからdeviceTokenを取得
       const tokens = usersDoc.reduce((t, doc) => {
         const u = doc.data();
-        console.log(u);
         if (!u || !u.tokens) return t;
         // アプリ側でtokenのランダム文字列だけをfirestoreに保存するような処理をしているので本来のtokenに復元
         const userTokens = Object.keys(u.tokens).map(t => `ExponentPushToken[${t}]`);
         return t.concat(userTokens);
       }, []);
       // プッシュ通知用のメッセージオブジェクトを作成
+      const roomDoc = await db
+        .collection('rooms')
+        .doc(roomId)
+        .get();
+      const room = roomDoc.data();
       const messages = [];
       tokens.forEach(pushToken => {
         if (!Expo.isExpoPushToken(pushToken)) {
@@ -47,7 +49,7 @@ exports.sendNotification = functions.firestore
         messages.push({
           to: pushToken,
           sound: 'default',
-          body: 'This is a test notification',
+          body: `${room.name} is updated!!`,
           data: { withSome: 'data' },
         });
       });
