@@ -12,39 +12,60 @@ const db = admin.firestore();
 db.settings(settings);
 
 exports.sendNotification = functions.firestore
-  .document('messages/{messageId}')
-  .onCreate(async () => {
-    // デバイストークンを Firestore から全検索
-    const query = db.collection('tokens').where('token', '>', '');
-    const snapshot = await query.get();
-    const tokens = snapshot.docs.map(doc => doc.get('token'));
-
-    // プッシュ通知用のメッセージオブジェクトを作成
-    const messages = [];
-    tokens.forEach(pushToken => {
-      if (!Expo.isExpoPushToken(pushToken)) {
-        console.error(`Push token ${pushToken} is not a valid Expo push token`);
+  // .document('messages/{messageId}')
+  .document('/rooms/{roomId}/messages/{messageId}')
+  .onCreate(async (_, context) => {
+    const { roomId } = context.params;
+    // roomを購読しているuserを検索
+    console.log(JSON.stringify(context));
+    try {
+      const usersSnapshot = await db
+        .collection('users')
+        .where(`topic.${roomId}`, '==', true)
+        .get();
+      if (usersSnapshot.empty) {
+        console.log('empty query result');
+        return;
       }
-
-      messages.push({
-        to: pushToken,
-        sound: 'default',
-        body: 'This is a test notification',
-        data: { withSome: 'data' },
-      });
-    });
-    const chunks = expo.chunkPushNotifications(messages);
-    const tickets = [];
-    (async () => {
-      // Expo Push API をリクエスト
-      for (let chunk of chunks) {
-        try {
-          const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-          console.log(ticketChunk);
-          tickets.push(...ticketChunk);
-        } catch (error) {
-          console.error(error);
+      const usersDoc = usersSnapshot.docs;
+      // usersからdeviceTokenを取得
+      const tokens = usersDoc.reduce((t, doc) => {
+        const u = doc.data();
+        console.log(u);
+        if (!u || !u.tokens) return t;
+        // アプリ側でtokenのランダム文字列だけをfirestoreに保存するような処理をしているので本来のtokenに復元
+        const userTokens = Object.keys(u.tokens).map(t => `ExponentPushToken[${t}]`);
+        return t.concat(userTokens);
+      }, []);
+      // プッシュ通知用のメッセージオブジェクトを作成
+      const messages = [];
+      tokens.forEach(pushToken => {
+        if (!Expo.isExpoPushToken(pushToken)) {
+          console.error(`Push token ${pushToken} is not a valid Expo push token`);
         }
-      }
-    })();
+
+        messages.push({
+          to: pushToken,
+          sound: 'default',
+          body: 'This is a test notification',
+          data: { withSome: 'data' },
+        });
+      });
+      const chunks = expo.chunkPushNotifications(messages);
+      const tickets = [];
+      (async () => {
+        // Expo Push API をリクエスト
+        for (let chunk of chunks) {
+          try {
+            const ticketChunk = await expo.sendPushNotificationsAsync(chunk);
+            console.log(ticketChunk);
+            tickets.push(...ticketChunk);
+          } catch (error) {
+            console.error(error);
+          }
+        }
+      })();
+    } catch (e) {
+      console.log(e);
+    }
   });
