@@ -13,13 +13,13 @@ db.settings(settings);
 
 exports.sendNotification = functions.firestore
   // .document('messages/{messageId}')
-  .document('/rooms/{roomId}/messages/{messageId}')
+  .document('/topics/{topicId}/messages/{messageId}')
   .onCreate(async (_, context) => {
-    const { roomId } = context.params;
+    const { topicId } = context.params;
     try {
       const usersSnapshot = await db
         .collection('users')
-        .where(`topic.${roomId}`, '==', true)
+        .where(`topic.${topicId}`, '==', true)
         .get();
       if (usersSnapshot.empty) {
         console.log('empty query result');
@@ -35,11 +35,11 @@ exports.sendNotification = functions.firestore
         return t.concat(userTokens);
       }, []);
       // プッシュ通知用のメッセージオブジェクトを作成
-      const roomDoc = await db
-        .collection('rooms')
-        .doc(roomId)
+      const topicDoc = await db
+        .collection('topics')
+        .doc(topicId)
         .get();
-      const room = roomDoc.data();
+      const topic = topicDoc.data();
       const messages = [];
       tokens.forEach(pushToken => {
         if (!Expo.isExpoPushToken(pushToken)) {
@@ -49,7 +49,7 @@ exports.sendNotification = functions.firestore
         messages.push({
           to: pushToken,
           sound: 'default',
-          body: `${room.name} is updated!!`,
+          body: `${topic.name} が更新されました!!`,
           data: { withSome: 'data' },
         });
       });
